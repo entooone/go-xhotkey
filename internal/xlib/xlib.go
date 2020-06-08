@@ -10,6 +10,7 @@ package xlib
 #include <X11/Xutil.h>
 #include <X11/extensions/XTest.h>
 #include <X11/keysym.h>
+#include <X11/XKBlib.h>
 
 Window defaultRootWindow(Display* dpy) {
     return DefaultRootWindow(dpy);
@@ -30,12 +31,56 @@ func NewWindow() *Window {
 	}
 }
 
+// type XWindowAttributes struct {
+// 	attr *C.XWindowAttributes
+// }
+
+// func (a *XWindowAttributes) Class()  {
+
+// }
+
+// func XGetWindowAttributes(display *Display, w *Window) *XWindowAttributes {
+// 	a := &XWindowAttributes{
+// 		attr: &C.XWindowAttributes{},
+// 	}
+// 	C.XGetWindowAttributes(display.dpy, w.win, a.attr)
+// 	return a
+// }
+
+type XClassHint struct {
+	hint *C.XClassHint
+}
+
+func (h *XClassHint) ResName() string {
+	return C.GoString(h.hint.res_name)
+}
+
+func (h *XClassHint) ResClass() string {
+	return C.GoString(h.hint.res_class)
+}
+
+func XGetClassHint(display *Display, w *Window) *XClassHint {
+	h := &XClassHint{
+		hint: &C.XClassHint{},
+	}
+	C.XGetClassHint(display.dpy, w.win, h.hint)
+	return h
+}
+
 type Display struct {
 	dpy *C.Display
 }
 
 type XKeyEvent struct {
 	ev *C.XKeyEvent
+}
+
+func (e *XKeyEvent) State() uint {
+	return uint(e.ev.state)
+}
+
+func (e *XKeyEvent) Keycode() uint {
+	return uint(e.ev.keycode)
 }
 
 func (e *XKeyEvent) ToXEvent() *XEvent {
@@ -85,6 +130,18 @@ func NewXKeyEvent(values *XKeyEventValues) *XKeyEvent {
 	}
 }
 
+type XAnyEvent struct {
+	ev *C.XAnyEvent
+}
+
+func (e *XAnyEvent) Window() *Window {
+	w := &Window{
+		win: C.Window(0),
+	}
+	w.win = e.ev.window
+	return w
+}
+
 type XEvent struct {
 	ev *C.XEvent
 }
@@ -94,9 +151,18 @@ func (e *XEvent) Type() int {
 	return int(*t)
 }
 
-func (e *XEvent) KeyCode() int {
+func (e *XEvent) XAnyEvent() *XAnyEvent {
+	any := (*C.XAnyEvent)(unsafe.Pointer(e.ev))
+	return &XAnyEvent{
+		ev: any,
+	}
+}
+
+func (e *XEvent) XKey() *XKeyEvent {
 	xkey := (*C.XKeyEvent)(unsafe.Pointer(e.ev))
-	return int(xkey.keycode)
+	return &XKeyEvent{
+		ev: xkey,
+	}
 }
 
 func NewXEvent() *XEvent {
@@ -129,6 +195,10 @@ func XDefaultRootWindow(display *Display) *Window {
 
 func XKeysymToKeycode(display *Display, key KeySym) KeyCode {
 	return KeyCode(C.XKeysymToKeycode(display.dpy, C.ulong(key)))
+}
+
+func XkbKeycodeToKeysym(display *Display, kc KeyCode, group, level int) KeySym {
+	return KeySym(C.XkbKeycodeToKeysym(display.dpy, C.uchar(kc), C.int(group), C.int(level)))
 }
 
 func XGrabKey(display *Display, keycode KeyCode, modifiers uint, grabWindow *Window, ownerEvents bool, pointerMode int, keyboardMode int) {

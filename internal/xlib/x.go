@@ -1,6 +1,6 @@
 package xlib
 
-type KeyCode byte
+type KeyCode uint
 
 const (
 	KeyPressMask   = (1 << 0)

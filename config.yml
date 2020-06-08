@@ -1,0 +1,16 @@
+version: 1
+hotkey:
+  - 
+    - grubkey:
+        key: "h"
+        modifiier:
+          - ctrl: true
+    - sendkey:
+        key: "backspace"
+    - with_window:
+        names:
+          - "firefox"
+    - without_window:
+        names:
+          - "urxvt"
+        ignore_case: true
