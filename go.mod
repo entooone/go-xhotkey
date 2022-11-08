@@ -1,3 +1,3 @@
-module github.com/entooone/hotkey
+module github.com/entooone/xhotkey
 
-go 1.13
+go 1.18
