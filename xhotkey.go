@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/entooone/xhotkey/internal/xlib"
+	"github.com/entooone/go-xhotkey/internal/xlib"
 )
 
 var (

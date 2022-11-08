@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/entooone/xhotkey"
-	"github.com/entooone/xhotkey/internal/xlib"
+	"github.com/entooone/go-xhotkey"
+	"github.com/entooone/go-xhotkey/internal/xlib"
 )
 
 func run() error {
