@@ -1,5 +1,7 @@
 # go-xhotkey
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/entooone/go-xhotkey.svg)](https://pkg.go.dev/github.com/entooone/go-xhotkey)
+
 This Go library introduces a HotKey system for the X Window System. By using this library, you can capture key events and call arbitrary functions defined in Go, or remap them to other keys. This library was developed to make it easy to implement customizable keyboard shortcuts.
 
 ## Usage
