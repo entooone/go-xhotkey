@@ -31,22 +31,6 @@ func NewWindow() *Window {
 	}
 }
 
-// type XWindowAttributes struct {
-// 	attr *C.XWindowAttributes
-// }
-
-// func (a *XWindowAttributes) Class()  {
-
-// }
-
-// func XGetWindowAttributes(display *Display, w *Window) *XWindowAttributes {
-// 	a := &XWindowAttributes{
-// 		attr: &C.XWindowAttributes{},
-// 	}
-// 	C.XGetWindowAttributes(display.dpy, w.win, a.attr)
-// 	return a
-// }
-
 type XClassHint struct {
 	hint *C.XClassHint
 }
