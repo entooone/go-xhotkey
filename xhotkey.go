@@ -1,10 +1,11 @@
 package xhotkey
 
 import (
-	"fmt"
+	"os"
 	"time"
 
 	"github.com/entooone/go-xhotkey/internal/xlib"
+	"golang.org/x/exp/slog"
 )
 
 var (
@@ -15,13 +16,6 @@ var (
 	keyboardMode int
 	event        *xlib.XEvent
 )
-
-var registerd = make(map[HotKey]struct{})
-
-type KeyInfo struct {
-	KeyCode   uint
-	Modifiers uint
-}
 
 func createKeyEvent(display *xlib.Display, win, winRoot *xlib.Window, press bool, keycode uint, modifiers uint) *xlib.XKeyEvent {
 	v := &xlib.XKeyEventValues{
@@ -48,7 +42,7 @@ func createKeyEvent(display *xlib.Display, win, winRoot *xlib.Window, press bool
 	return xlib.NewXKeyEvent(v)
 }
 
-func sendKey(display *xlib.Display, keycode uint, modifiers uint) {
+func sendKeyToDisplay(display *xlib.Display, keycode uint, modifiers uint) {
 	winRoot := xlib.XDefaultRootWindow(display)
 
 	winFocus := xlib.NewWindow()
@@ -62,8 +56,14 @@ func sendKey(display *xlib.Display, keycode uint, modifiers uint) {
 	xlib.XSendEvent(display, winFocus, true, xlib.KeyPressMask, event.ToXEvent())
 }
 
-func SendKey(key KeyInfo) {
-	sendKey(display, key.KeyCode, key.Modifiers)
+type KeyInfo struct {
+	KeyCode   uint
+	Modifiers uint
+}
+
+func sendKey(key KeyInfo) {
+	slog.Debug("sendkey:", "keycode", key.KeyCode, "modifiers", key.Modifiers)
+	sendKeyToDisplay(display, key.KeyCode, key.Modifiers)
 }
 
 func addGrabKey(key KeyInfo) {
@@ -76,39 +76,21 @@ func isPressKey(key KeyInfo) bool {
 	return key.KeyCode == pk && key.Modifiers == pm
 }
 
-type HotKey interface {
-	GrabKey() KeyInfo
-	Execute()
+type Option struct {
+	HotKeys []HotKey
+	IsDebug bool
 }
 
-func RegistHotKey(hotkey HotKey) {
-	registerd[hotkey] = struct{}{}
-}
+func Run(option *Option) error {
+	handler := slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}.NewJSONHandler(os.Stdout)
+	logger := slog.New(handler)
+	slog.SetDefault(logger)
 
-type KeyMap struct {
-	grabkey KeyInfo
-	sendkey KeyInfo
-}
-
-func NewKeyMap(grabkey, sendkey KeyInfo) KeyMap {
-	return KeyMap{
-		grabkey: grabkey,
-		sendkey: sendkey,
-	}
-}
-
-func (m KeyMap) GrabKey() KeyInfo {
-	return m.grabkey
-}
-
-func (m KeyMap) Execute() {
-	SendKey(m.sendkey)
-}
-
-func Run() error {
 	var isPressing bool
 
-	for r := range registerd {
+	for _, r := range option.HotKeys {
 		addGrabKey(r.GrabKey())
 	}
 
@@ -118,12 +100,11 @@ func Run() error {
 			switch event.Type() {
 			case xlib.KeyPress:
 				if !isPressing {
-					fmt.Println(xlib.XGetClassHint(display, event.XAnyEvent().Window()).ResName())
-					fmt.Println(xlib.XGetClassHint(display, event.XAnyEvent().Window()).ResClass())
-					fmt.Println("Hot key pressed!")
-					for r := range registerd {
+					slog.Debug("hotkey pressed")
+					for _, r := range option.HotKeys {
 						if isPressKey(r.GrabKey()) {
-							fmt.Println(r)
+							kinfo := r.GrabKey()
+							slog.Debug("grubkey:", "keycode", kinfo.KeyCode, "modifiers", kinfo.Modifiers)
 							r.Execute()
 						}
 					}
@@ -131,7 +112,7 @@ func Run() error {
 				}
 			case xlib.KeyRelease:
 				if isPressing {
-					fmt.Println("Hot key released!")
+					slog.Debug("hotkey released")
 					isPressing = false
 				}
 			}
