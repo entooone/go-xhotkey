@@ -82,8 +82,13 @@ type Option struct {
 }
 
 func Run(option *Option) error {
+	level := slog.LevelInfo
+	if option.IsDebug {
+		level = slog.LevelDebug
+	}
+
 	handler := slog.HandlerOptions{
-		Level: slog.LevelDebug,
+		Level: level,
 	}.NewJSONHandler(os.Stdout)
 	logger := slog.New(handler)
 	slog.SetDefault(logger)
